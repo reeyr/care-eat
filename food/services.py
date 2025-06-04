@@ -7,8 +7,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
 from .models import Food
 
-API_URL = "https://api.data.go.kr/openapi/tn_pubr_public_nutri_food_info_api"
-API_KEY = os.getenv('FOOD_API_KEY', "HqkZncN4ctZWUQO6gcx3NBpyVq%2B%2Fu23Q7Z2JEmI2XP2DlsxuI%2FwFuaKnTMQCjoK6LcJebFvHhYzc9CDtmLCqyg%3D%3D")
+API_URL = os.getenv("FOOD_API_URL", "https://api.data.go.kr/openapi/tn_pubr_public_nutri_food_info_api")
+API_KEY = os.getenv('FOOD_API_KEY')
 
 #음식생성
 def create_food(name: str, kcal_per_unit: float, unit: str,
@@ -128,17 +128,17 @@ def foodApi(food_name: str):
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
 
-        print("📦 API 요청 파라미터:", params)
+        print("테스트API 요청 파라미터:", params)
 
         response = requests.get(API_URL, params=params, headers=headers, timeout=10)
 
-        print("📡 응답 상태 코드:", response.status_code)
+        print("테스트응답 상태 코드:", response.status_code)
 
         if response.status_code != 200:
             raise ValueError(f"API 요청 실패: {response.status_code}")
 
         data = response.json()
-        print("🧾 JSON 응답 데이터:", data)
+        print("테스트JSON 응답 데이터:", data)
 
         items = data.get('body', {}).get('items', [])
         if not items:

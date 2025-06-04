@@ -16,6 +16,7 @@ from .services import (
     delete_food,
     get_popular_foods
 )
+import os
 
 
 class FoodListCreateView(APIView):
@@ -137,7 +138,7 @@ class ExternalFoodImportView(APIView):
             return Response({'error': '검색어가 필요합니다.'}, status=400)
 
         params = {
-            'serviceKey': 'HqkZncN4ctZWUQO6gcx3NBpyVq%2B%2Fu23Q7Z2JEmI2XP2DlsxuI%2FwFuaKnTMQCjoK6LcJebFvHhYzc9CDtmLCqyg%3D%3D',
+            'serviceKey': os.getenv('FOOD_API_KEY'),
             'desc_kor': query,
             'numOfRows': 1,
             'pageNo': 1,
@@ -156,8 +157,8 @@ class ExternalFoodImportView(APIView):
                 timeout=10
             )
 
-            print("📦 API 요청 파라미터:", params)
-            print("📡 응답 상태 코드:", response.status_code)
+            print("테스트API 요청 파라미터:", params)
+            print("테스트응답 상태 코드:", response.status_code)
 
             if response.status_code != 200:
                 return Response({
