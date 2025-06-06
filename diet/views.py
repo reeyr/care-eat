@@ -23,8 +23,7 @@ from rest_framework import permissions
 class DietCreateAPIView(APIView):
     #로그인 기능 구현되면 여기에 인증토큰사용
     #로그인-토큰 발급
-    #permission_classes = [permissions.IsAuthenticated] #로그인 인증해야 접근 가능
-    permission_classes = [AllowAny] #인증 없이 접근 허용(테스트용)
+    permission_classes = [permissions.IsAuthenticated] #로그인 인증해야 접근 가능
 
 
     def post(self, request):
@@ -49,8 +48,7 @@ class DietCreateAPIView(APIView):
 
 #사용자 식단 전체 조회
 class DietListAPIView(APIView):
-    # permission_classes = [permissions.IsAuthenticated]
-    permission_classes = [AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
         #쿼리 파라미터로 필터링
@@ -84,8 +82,7 @@ class DietListAPIView(APIView):
 
 #식단 상세 조회/수정/삭제
 class DietDetailAPIView(APIView):
-    # permission_classes = [permissions.IsAuthenticated]
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self, pk, user):
         return get_object_or_404(Diet, pk=pk, user=user)
@@ -127,34 +124,17 @@ class DietDetailAPIView(APIView):
 
 #통계 관련 뷰
 class DailyCaloriesAPIView(APIView):
-    #permission_classes = [permissions.IsAuthenticated]
-    permission_classes = [AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
 
-    #실제서비스용
-    # def get(self, request):
-    #     date_param = request.GET.get('date', str(date.today()))
-    #     try:
-    #         target_date = datetime.strptime(date_param, '%Y-%m-%d').date()
-    #     except ValueError:
-    #         return Response(
-    #             {'error': '날짜 형식이 올바르지 않습니다. YYYY-MM-DD 형식을 사용하세요.'},
-    #             status=status.HTTP_400_BAD_REQUEST
-    #         )
-    #
-    #     daily_data = get_daily_calories(request.user, target_date)
-    #     return Response(daily_data)
-
-    #테스트용
-    def get(selfself, request):
+    def get(self, request):
         date_param = request.GET.get('date', str(date.today()))
         try:
             target_date = datetime.strptime(date_param, '%Y-%m-%d').date()
         except ValueError:
             return Response(
-                {'error':'날짜 형식이 올바르지 않습니다. YYYY-MM-DD 형식을 사용하세요.'},
+                {'error': '날짜 형식이 올바르지 않습니다. YYYY-MM-DD 형식을 사용하세요.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         daily_data = get_daily_calories(request.user, target_date)
         return Response(daily_data)
-
