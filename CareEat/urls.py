@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.urls import path, include
-from django.http import HttpResponse  # 이거 추가
+from django.http import HttpResponse
 from accounts.views import login_redirect
 from django.contrib.auth.views import LogoutView
 
@@ -14,4 +14,8 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(next_page='/'), name='logout'),  # 로그아웃 경로
     path('home/', home, name='home'),  # 홈 페이지
     path('accounts/', include('accounts.urls')),  # 회원정보 등록/수정
+
+    # API 경로
+    path('api/diet/', include('diet.urls')),
+    path('api/food/', include('food.urls')),
 ]

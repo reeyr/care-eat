@@ -2,7 +2,11 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+<<<<<<< HEAD
       <module fileurl="file://$PROJECT_DIR$/.idea/care-eat.iml" filepath="$PROJECT_DIR$/.idea/care-eat.iml" />
+=======
+      <module fileurl="file://$PROJECT_DIR$/.idea/CareEat.iml" filepath="$PROJECT_DIR$/.idea/CareEat.iml" />
+>>>>>>> feature-diet-upstream
     </modules>
   </component>
 </project>
