@@ -19,8 +19,8 @@ from .services import (
 
 
 class FoodListCreateView(APIView):
-    # permission_classes = [permissions.IsAuthenticated]
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
+    #permission_classes = [permissions.AllowAny]
 
     #음식 목록 조회
     def get(self, request):
@@ -52,8 +52,8 @@ class FoodListCreateView(APIView):
 
 
 class FoodDetailView(APIView):
-    # permission_classes = [permissions.IsAuthenticated]
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
+    #permission_classes = [permissions.AllowAny]
 
     #음식 상세 조회
     def get(self, request, pk):
@@ -114,8 +114,8 @@ class FoodDetailView(APIView):
 
 
 class PopularFoodsView(APIView):
-    # permission_classes = [permissions.IsAuthenticated]
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
+    #permission_classes = [permissions.AllowAny]
 
     #음식 인기 조회
     def get(self, request):
@@ -127,8 +127,8 @@ class PopularFoodsView(APIView):
 
 #API 연결용 뷰
 class ExternalFoodImportView(APIView):
-    # permission_classes = [permissions.IsAuthenticated]
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
+    #permission_classes = [permissions.AllowAny]
 
     def get(self, request):
         #print("ExternalFoodImportView 호출됨")

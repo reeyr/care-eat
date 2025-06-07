@@ -7,8 +7,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
 from .models import Food
 
-API_URL = "https://api.data.go.kr/openapi/tn_pubr_public_nutri_food_info_api"
-API_KEY = os.getenv('FOOD_API_KEY', "HqkZncN4ctZWUQO6gcx3NBpyVq%2B%2Fu23Q7Z2JEmI2XP2DlsxuI%2FwFuaKnTMQCjoK6LcJebFvHhYzc9CDtmLCqyg%3D%3D")
+#API_URL = "https://api.data.go.kr/openapi/tn_pubr_public_nutri_food_info_api"
+#API_KEY = os.getenv('FOOD_API_KEY', "HqkZncN4ctZWUQO6gcx3NBpyVq%2B%2Fu23Q7Z2JEmI2XP2DlsxuI%2FwFuaKnTMQCjoK6LcJebFvHhYzc9CDtmLCqyg%3D%3D")
 
 #음식생성
 def create_food(name: str, kcal_per_unit: float, unit: str,
