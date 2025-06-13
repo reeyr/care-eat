@@ -1,0 +1,224 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>식단추가</title>
+  <link rel="stylesheet" href="{% static 'css/meal_add.css' %}" />
+  <link rel="stylesheet" href="{% static 'css/common.css' %}" />
+  <link rel="stylesheet" href="{% static 'css/search.css' %}" />
+</head>
+<body>
+
+  <div class="top-area">
+    <div class="top-bar">
+      <button class="back-button">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M15 18L9 12L15 6" stroke="#212121" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <span class="top-text"></span>
+    </div>
+
+    <div>
+      <p class="kcal">0<span class="kcal-text">kcal</span></p>
+    </div>
+
+    <div class="kcals">
+      <div class="kcal-item">
+        <p class="kcal-item-text">순탄수</p>
+        <p class="kcal-item-num">0g</p>
+      </div>
+      <div class="kcal-item">
+        <p class="kcal-item-text">단백질</p>
+        <p class="kcal-item-num">0g</p>
+      </div>
+      <div class="kcal-item">
+        <p class="kcal-item-text">지방</p>
+        <p class="kcal-item-num">0g</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom">
+    <div class="meal_bar">
+      <h2 class="title-text"><span class="title-num"></span></h2>
+      <img class="title-icon" src="{% static 'images/plus.png' %}" alt="추가" id="add-food-btn"/>
+    </div>
+    <div class="food-list"></div>
+    <button class="save">식단 등록</button>
+  </div>
+
+  <div id="modal-overlay" class="modal-overlay" style="display: none;">
+    <div class="modal">
+      <div class="modal-content">
+        <div id="modal-body"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const deleteIconUrl = "{% static 'images/x.png' %}";
+  
+document.addEventListener('DOMContentLoaded', () => {
+  const selectedMeal = localStorage.getItem('selectedMeal');
+  const selectedDate = localStorage.getItem("selectedDate") || new Date().toISOString().slice(0, 10);
+  const savedMealsKey = `meals-${selectedDate}-${selectedMeal}`;
+  const existingMeals = JSON.parse(localStorage.getItem(savedMealsKey)) || [];
+  const tempMeals = JSON.parse(localStorage.getItem('savedMeals')) || [];
+  window.combinedMeals = [...existingMeals, ...tempMeals];
+
+
+
+  renderMeals();
+
+  document.querySelector('.save').addEventListener('click', () => {
+    localStorage.setItem(savedMealsKey, JSON.stringify(window.combinedMeals));
+    localStorage.removeItem('savedMeals');
+    localStorage.removeItem('selectedMeal');
+    window.location.href = '{% url "accounts:home" %}';
+  });
+
+  document.getElementById('add-food-btn').addEventListener('click', () => {
+    localStorage.setItem('savedMeals', JSON.stringify(window.combinedMeals));
+    localStorage.setItem('returnToMealAdd', 'true');
+    window.location.href = '{% url "accounts:search" %}';
+  });
+});
+
+function renderMeals() {
+  const selectedMeal = localStorage.getItem('selectedMeal');
+  const foodList = document.querySelector('.food-list');
+  document.querySelector('.top-text').textContent = selectedMeal;
+  document.querySelector('.title-text').innerHTML = `${selectedMeal}식단 <span class="title-num">${window.combinedMeals.length}</span>`;
+  foodList.innerHTML = '';
+
+  window.combinedMeals.forEach((meal, index) => {
+    const item = document.createElement('div');
+    item.classList.add('item');
+    item.innerHTML = `
+      <div class="item-text">
+        <div class="item-text-title">${meal.name}</div>
+        <div class="item-text-sub">${meal.volume} × ${meal.count}개</div>
+      </div>
+      <div class="item-right">
+        <div class="item-right-num">${meal.kcal}</div>
+        <img class="item-right-icon" src="${deleteIconUrl}" alt="삭제" data-index="${index}"/>
+      </div>
+    `;
+    item.querySelector('.item-right-icon').addEventListener('click', (e) => {
+      window.combinedMeals.splice(index, 1);
+      renderMeals();
+    });
+    item.addEventListener('click', (e) => {
+      if (e.target.classList.contains('item-right-icon')) return;
+      openEditModal(meal, index);
+    });
+    foodList.appendChild(item);
+  });
+
+  updateSummary();
+}
+
+function updateSummary() {
+  const total = window.combinedMeals.reduce((acc, cur) => {
+    const parseVal = v => parseFloat(v.replace(/[^\d.]/g, '')) || 0;
+    acc.kcal += parseVal(cur.kcal);
+    acc.carb += parseVal(cur.carb);
+    acc.protein += parseVal(cur.protein);
+    acc.fat += parseVal(cur.fat);
+    return acc;
+  }, { kcal: 0, carb: 0, protein: 0, fat: 0 });
+
+  document.querySelector('.kcal').innerHTML = `${total.kcal} <span class="kcal-text">kcal</span>`;
+  document.querySelectorAll('.kcal-item')[0].querySelector('.kcal-item-num').textContent = `${total.carb}g`;
+  document.querySelectorAll('.kcal-item')[1].querySelector('.kcal-item-num').textContent = `${total.protein}g`;
+  document.querySelectorAll('.kcal-item')[2].querySelector('.kcal-item-num').textContent = `${total.fat}g`;
+}
+
+function openEditModal(meal, index) {
+  let count = meal.count || 1;
+  const parse = val => parseFloat(val?.replace(/[^\d.]/g, '')) || 0;
+  const base = {
+    kcal: parse(meal.kcal) / count,
+    carb: parse(meal.carb) / count,
+    protein: parse(meal.protein) / count,
+    fat: parse(meal.fat) / count
+  };
+  const format = val => val % 1 === 0 ? val : val.toFixed(1);
+
+  const modalHTML = `
+    <div class="modal-title">${meal.name}</div>
+    <div class="detail-box">
+      <div class="detail-item left">
+        <p class="detail">탄수화물</p>
+        <p class="content" id="carb">${meal.carb}</p>
+      </div>
+      <div class="detail-item center">
+        <p class="detail">단백질</p>
+        <p class="content" id="protein">${meal.protein}</p>
+      </div>
+      <div class="detail-item right">
+        <p class="detail">지방</p>
+        <p class="content" id="fat">${meal.fat}</p>
+      </div>
+      <p class="kcal-info" id="kcal">${meal.kcal}</p>
+    </div>
+    <div class="volume-box">
+      <div class="amount">
+        <p class="amount-info">${meal.volume}</p>
+      </div>
+    </div>
+    <div class="count-box">
+      <button class="count-btn" id="decrease">–</button>
+      <span class="count-number" id="count">${count}</span>
+      <button class="count-btn" id="increase">+</button>
+    </div>
+    <button class="save-btn" id="modal-save" type="button">수정 저장</button>
+  `;
+
+  const overlay = document.getElementById('modal-overlay');
+  const modalBody = document.getElementById('modal-body');
+  overlay.style.display = 'flex';
+  modalBody.innerHTML = modalHTML;
+
+  const updateDisplay = () => {
+    document.getElementById('count').textContent = count;
+    document.getElementById('kcal').textContent = `${format(base.kcal * count)}kcal`;
+    document.getElementById('carb').textContent = `${format(base.carb * count)}g`;
+    document.getElementById('protein').textContent = `${format(base.protein * count)}g`;
+    document.getElementById('fat').textContent = `${format(base.fat * count)}g`;
+  };
+
+  setTimeout(() => {
+    document.getElementById('increase').addEventListener('click', () => {
+      count++;
+      updateDisplay();
+    });
+    document.getElementById('decrease').addEventListener('click', () => {
+      if (count > 1) {
+        count--;
+        updateDisplay();
+      }
+    });
+    document.getElementById('modal-save').addEventListener('click', () => {
+      meal.count = count;
+      meal.kcal = `${format(base.kcal * count)}kcal`;
+      meal.carb = `${format(base.carb * count)}g`;
+      meal.protein = `${format(base.protein * count)}g`;
+      meal.fat = `${format(base.fat * count)}g`;
+      window.combinedMeals.splice(index, 1, { ...meal });
+      closeModal();
+      renderMeals();
+    });
+  }, 0);
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').style.display = 'none';
+}
+</script>
+
+</body>
+</html>

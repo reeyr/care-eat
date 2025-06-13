@@ -1,0 +1,357 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Careat</title>
+
+  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+  
+</head>
+<body>
+ <!-- top-bar -->
+  <div class="title-row">
+    <h2 class="title-text">식단 기록</h2>
+    <a href="{% url 'accounts:mypage' %}">
+      <img class="icon" src="{% static 'images/profile.png' %}" alt="profile" />
+    </a>
+  </div>
+<!-- 날짜 선택 -->
+<div class="calendar">
+  <div class="date_text" id="month-text"></div>
+  <div class="date_select" id="date-select">
+  </div>
+</div>
+
+<!-- 칼로리 계산 -->
+<div class="calory-num">
+  <h2 class="calory-focus-num" id="current-kcal">0 </h2> 
+  <h2 class="calory-unfocus-num">&nbsp;/ <span id="goal-kcal">1420 </span> kcal</h2> 
+</div>
+    <!-- 칼로리 바 -->
+    <div class="bar">
+    <div class="bar-wrapper">
+        <div class="bar-fill" style="width: 80%"></div>
+    </div>
+    </div>
+    <!-- 상세 칼로리 -->
+    <div class="calorys">
+    <div class="calory">
+        <div><p>순탄수</p></div>
+    <span>0<span style="color:rgba(136, 136, 136, 1)">/180g</span>
+    </div>
+    <div class="calory">
+        <div><p>단백질</p></div>
+    <span>0<span style="color:rgba(136, 136, 136, 1)">/75g</span>
+    </div>
+    <div class="calory">
+        <div><p>지방</p></div>
+    <span>0<span style="color:#888888">/45g</span>
+    </div>
+    </div>
+
+ <!-- 식단 추가    -->
+<h2 class="title-text" style="margin-top: 50px;">식단 추가</h2>
+
+<div class="meal-list">
+    <div class="meal-item">
+        <span class="meal-name">아침</span>
+        <span class="meal-kcal empty">0Kcal</span>
+        <span class="meal-add" data-meal="아침">+</span>
+    </div>
+</div>
+    <div class="meal-item">
+      <span class="meal-name">점심</span>
+      <span class="meal-kcal">0Kcal</span>
+      <span class="meal-add" data-meal="점심">+</span>
+    </div>
+    <div class="meal-item">
+      <span class="meal-name">저녁</span>
+      <span class="meal-kcal">0Kcal</span>
+      <span class="meal-add" data-meal="저녁">+</span>
+    </div>
+    <div class="meal-item">
+      <span class="meal-name">간식</span>
+      <span class="meal-kcal">0Kcal</span>
+      <span class="meal-add" data-meal="간식">+</span>
+    </div>
+  </div>
+  
+<!-- 식단 피드백 -->
+<div class="feedback">
+  <div class="feedback-toggle" onclick="toggleFeedback()">
+    <span class="label">식단 피드백</span>
+    <img id="feedback-arrow-icon" src="{% static 'images/open.png' %}" alt="open" class="arrow-icon" />
+  </div>
+
+    <!-- 식단 판넬 -->
+    <div id="feedback-panel" class="feedback-panel">
+        <p class="suggest_text1">김슈니님의 식단 유형은 <span class="highlight">당 과다형</span>이에요.<br>
+        당류를 줄이면 빠른 체중감량에 도달할 수 있어요!</p>
+
+        <p class="suggest_text2">간식을 한번에 줄이기 어렵다면 <br> 이런 간식은 어때요?</p>
+    
+        <div class="suggestions">
+        <div class="item">
+            <div class="suggest_img">
+               <a href="https://lalasweet.kr/product/%EB%9D%BC%EB%9D%BC%EC%8A%A4%EC%9C%97-%EC%A0%80%EB%8B%B9-%EB%AA%A8%EB%82%98%EC%B9%B4-16%EA%B0%9C/29/">
+                 <img src="{% static 'images/lalaswit.png' %}" alt="라라스윗">
+            </div>
+            <div class="item-text">라라스윗 저당 모나카</div></a>
+            <div class="item-num">2,500원</div>
+            </div>
+            <div class="item">
+                <div class="suggest_img">
+                    <a href="https://mynormal.shop/shop_view/?idx=13&srsltid=AfmBOoq3jk2QJOFGQ4R7DyiYjQhVqsR6JmPiGrmWe9dsYGmdnzuiHyTo">
+                        <img src="{% static 'images/mynormal.png' %}" alt="마이노멀">
+                </div>
+                <div class="item-text">마이노멀 저당 아이스크림 파인트 474ml</div></a>
+                <div class="item-num">2,500원</div>
+                </div>
+                <div class="item">
+                    <div class="suggest_img">
+                        <a href="https://mynormal.shop/shop_view/?idx=301&srsltid=AfmBOopVXg_PnIVeC-23-l3JJosuGsy7xZ0J8XDhxbL_nXQpsHVszyMk">
+                            <img src="{% static 'images/greentea.png' %}" alt="그린티">
+                    </div>
+                    <div class="item-text">마이노멀 저당 말차 아몬 초코볼 1박스... </div></a>
+                    <div class="item-num">11,900원</div>
+                    </div>
+        </div>
+    </div>
+</div>
+
+<!-- 운동 추천 -->
+<div class="exercise">
+    <div class="exercise-toggle" onclick="toggleexercise()">
+      <span class="label">운동 추천 </span>
+      <img id="exercise-arrow-icon" src="{% static 'images/open.png' %}" alt="open" class="arrow-icon" />
+    </div>
+    <!-- 운동 추천 판넬 -->
+    <div id="exercise-panel" class="exercise-panel">
+        <p class="suggest_text1">김슈니님! 오늘은 간식을 많이 드셨으니 <br> <span class="highlight">유산소 운동</span>어떠신가요?</p>
+        <div class="youtube_section">
+            <div class="exercise-title">지방타파 고강도 유산소</div>
+            <div class="card-slider">
+                <div class="card">
+                    <a href="https://www.youtube.com/watch?v=5bukb6aeobs"><img src="{% static 'images/youtube1.png' %}" alt="극강의 유산소"/>
+                    <div class="card-title">올 것이 왔다... 도전 해보세요 <br> - 20분🔥 땀샤워 고강도 인... </div></a>
+                    <div class="youtube">
+                        <img class="youtube-icon" src="{% static 'images/yotube-icon.png' %}" alt="빅씩스"></img>
+                        <div class="youtube-title">빅씨스 Bigsis</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <a href="https://www.youtube.com/results?search_query=%EB%AC%B4%EC%84%9C%EC%9A%B4+%EC%86%8D%EB%8F%84%EB%A1%9C+%EB%B9%A0%EC%A7%80%EB%8A%94"><img src="{% static 'images/youtube2.png' %}" alt="극강의 유산소"/>
+                    <div class="card-title">무서운 속도로 살빠지는 운동<br>🔥이 운동 딱 3주만 해보세요...</div></a>
+                    <div class="youtube">
+                        <img class="youtube-icon" src="{% static 'images/yotube-icon.png' %}" alt="빅씩스"></img>
+                        <div class="youtube-title">홍둥이</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <a href="https://www.youtube.com/watch?v=S4xfkLMJdwI"><img src="{% static 'images/youtube3.png' %}" alt="극강의 유산소"/>
+                    <div class="card-title">정말 무서운 속도로 살이 빠지<br>는 극강의 유산소 -41kg 까...</div></a>
+                    <div class="youtube">
+                        <img class="youtube-icon" src="{% static 'images/yotube-icon.png' %}" alt="빅씩스"></img>
+                        <div class="youtube-title">에이핏 afit</div>
+                    </div>
+                </div>
+            </div>
+            </div>
+
+            <div class="youtube_section">
+                <div class="exercise-title">NO 층간소음! 가벼운 유산소</div>
+                <div class="card-slider">
+                    <div class="card">
+                        <a href="https://www.youtube.com/watch?v=0IWibGOf1jU"><img src="{% static 'images/youtube4.png' %}" alt="극강의 유산소"/>
+                        <div class="card-title">몸 무거운 월요일 - 가볍게 부<br>담없이 28분 층간소음 없는...</div></a>
+                        <div class="youtube">
+                            <img class="youtube-icon" src="{% static 'images/yotube-icon.png' %}" alt="빅씩스"></img>
+                            <div class="youtube-title">빅씨스 Bigsis</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <a href="https://www.youtube.com/watch?v=s82_Hi_5ItA"><img src="{% static 'images/youtube5.png' %}" alt="극강의 유산소"/>
+                        <div class="card-title">살이 이렇게나 빠진다구?! 층<br>간소음❌ 지방 태우기🔥 No...</div></a>
+                        <div class="youtube">
+                            <img class="youtube-icon" src="{% static 'images/yotube-icon.png' %}" alt="빅씩스"></img>
+                            <div class="youtube-title">MIZI</div>
+                        </div>
+                    </div>
+    
+                    <div class="card">
+                        <img src="{% static 'images/youtube6.png' %}" alt="극강의 유산소"/>
+                        <a href="https://www.youtube.com/watch?v=cl5cc1_5zZc"><div class="card-title">층간 소음 걱정 없이 체중 감량<br>보장! 딱 5분 운동!</div></a>
+                        <div class="youtube">
+                            <img class="youtube-icon" src="{% static 'images/yotube-icon.png' %}" alt="빅씩스"></img>
+                            <div class="youtube-title">여리니핏</div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+        </div>
+</div>
+
+<script>
+    
+function getTodayDate() {
+    const today = new Date();
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+}
+
+function goToSearch(e) {
+    const meal = e.target.dataset.meal;
+    const searchUrl = "{% url 'accounts:search' %}";
+    console.log("이동할 경로:", `${searchUrl}?meal=${encodeURIComponent(meal)}`);
+    location.href = `${searchUrl}?meal=${encodeURIComponent(meal)}`;
+}
+
+
+
+
+
+window.addEventListener("DOMContentLoaded", () => {
+  // 주간 날짜 렌더링 및 선택 날짜 설정
+  const today = new Date();
+  const monthText = document.getElementById("month-text");
+  const dateSelect = document.getElementById("date-select");
+  const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(today.getDate() - today.getDay()); // 이번주 일요일
+
+  monthText.textContent = `${today.getMonth() + 1}월`;
+
+  for (let i = 0; i < 7; i++) {
+    const currentDay = new Date(startOfWeek);
+    currentDay.setDate(startOfWeek.getDate() + i);
+
+    const date = currentDay.getDate();
+    const isToday = currentDay.toDateString() === today.toDateString();
+    const dayText = isToday ? "오늘" : weekdays[i];
+
+    const year = currentDay.getFullYear();
+    const month = String(currentDay.getMonth() + 1).padStart(2, '0');
+    const day = String(currentDay.getDate()).padStart(2, '0');
+    const dateKey = `${year}-${month}-${day}`;
+
+    const dayDiv = document.createElement("div");
+    dayDiv.className = "day";
+
+    // localStorage 저장된 날짜와 비교해서 활성화 표시
+    const savedSelectedDate = localStorage.getItem("selectedDate");
+    if (savedSelectedDate === dateKey || (!savedSelectedDate && isToday)) {
+      dayDiv.classList.add("active");
+      if (!savedSelectedDate) localStorage.setItem("selectedDate", dateKey); // 기본값 저장
+    }
+
+    dayDiv.innerHTML = `
+      <div>${date}</div>
+      <div class="day_text">${dayText}</div>
+    `;
+
+    dayDiv.addEventListener("click", () => {
+      document.querySelectorAll(".day").forEach(el => el.classList.remove("active"));
+      dayDiv.classList.add("active");
+      localStorage.setItem("selectedDate", dateKey);
+      location.reload(); // 날짜 바뀌면 새로고침해서 데이터 갱신
+    });
+
+    dateSelect.appendChild(dayDiv);
+  }
+
+  document.querySelectorAll('.meal-add').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const meal = btn.getAttribute('data-meal');
+    const selectedDate = localStorage.getItem("selectedDate") || getTodayDate();
+    const existingMeals = JSON.parse(localStorage.getItem(`meals-${selectedDate}-${meal}`)) || [];
+
+    localStorage.setItem('selectedMeal', meal);
+
+    if (existingMeals.length > 0) {
+      // 기존 식단이 있으면 수정 페이지로 이동
+      window.location.href = '/accounts/meal-edit/';
+    } else {
+      // 새로운 식단 등록이면 검색 페이지로 이동
+      window.location.href = `/accounts/search/?meal=${encodeURIComponent(meal)}`;
+    }
+  });
+});
+
+  // 메인 화면 식사별 칼로리 계산 및 표시
+  const mealTypes = ['아침', '점심', '저녁', '간식'];
+  const selectedDate = localStorage.getItem("selectedDate") || getTodayDate();
+  let totalKcal = 0;
+
+  mealTypes.forEach(meal => {
+    const meals = JSON.parse(localStorage.getItem(`meals-${selectedDate}-${meal}`)) || [];
+    const mealKcal = meals.reduce((acc, cur) => {
+      const kcal = parseFloat(cur.kcal?.replace(/[^\d.]/g, '')) || 0;
+      return acc + kcal;
+    }, 0);
+
+    const kcalSpan = [...document.querySelectorAll('.meal-item')].find(
+      item => item.querySelector('.meal-name')?.textContent === meal
+    )?.querySelector('.meal-kcal');
+
+    if (kcalSpan) {
+      kcalSpan.textContent = `${mealKcal}Kcal`;
+      kcalSpan.classList.toggle('empty', mealKcal === 0);
+    }
+
+    totalKcal += mealKcal;
+  });
+
+  document.querySelector('.calory-focus-num').textContent = totalKcal;
+
+  // 칼로리 목표 대비 진행률 바
+  const targetKcal = 1420;
+  const percent = Math.min((totalKcal / targetKcal) * 100, 100);
+  document.querySelector('.bar-fill').style.width = `${percent}%`;
+
+
+  // 목표 칼로리 바 렌더링 (추가: current-kcal, goal-kcal 엘리먼트 있을 경우)
+  const currentEl = document.getElementById("current-kcal");
+  const goalEl = document.getElementById("goal-kcal");
+  if(currentEl && goalEl){
+    const current = parseInt(currentEl.textContent.trim(), 10);
+    const goal = parseInt(goalEl.textContent.trim(), 10);
+    const barPercent = Math.min((current / goal) * 100, 100);
+    const caloryBar = document.getElementById("calory-bar");
+    if(caloryBar){
+      caloryBar.style.width = `${barPercent}%`;
+    }
+  }
+});
+
+// 토글 함수: 피드백 패널
+function toggleFeedback() {
+  const panel = document.getElementById("feedback-panel");
+  const arrow = document.getElementById("feedback-arrow-icon");
+  const isOpen = panel.style.display === "block";
+  panel.style.display = isOpen ? "none" : "block";
+  arrow.src = isOpen ? "{% static 'images/open.png' %}" : "{% static 'images/close.png' %}";
+  arrow.alt = isOpen ? "열기 아이콘" : "닫기 아이콘";
+}
+
+// 토글 함수: 운동 패널
+function toggleexercise() {
+  const panel = document.getElementById("exercise-panel");
+  const arrow = document.getElementById("exercise-arrow-icon");
+  const isOpen = panel.style.display === "block";
+  panel.style.display = isOpen ? "none" : "block";
+  arrow.src = isOpen ? "{% static 'images/open.png' %}" : "{% static 'images/close.png' %}";
+  arrow.alt = isOpen ? "열기 아이콘" : "닫기 아이콘";
+
+  // 강제 리플로우 처리 (화면 깜빡임 방지용)
+  arrow.style.display = "none";
+  void arrow.offsetHeight;
+  arrow.style.display = "";
+}
+
+</script>
+    
+</body>
+
+</html>

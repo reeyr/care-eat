@@ -6,11 +6,11 @@ from decimal import Decimal
 
 class Food(models.Model):
     name = models.CharField(max_length=100, unique=True) #음식이름-중복방지
-    kcal = models.DecimalField(max_digits=8,
+    kcal_per_unit = models.DecimalField(max_digits=8,
                                decimal_places=2,
                                validators=[MinValueValidator(Decimal('0.01'))]
                                ) #단위당 칼로리
-    units = models.CharField(max_length=20) #단위(g, 개, ml 등)
+    unit = models.CharField(max_length=20) #단위(g, 개, ml 등)
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True) #음식 설명
     updated_at = models.DateTimeField(auto_now=True)

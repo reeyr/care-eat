@@ -1,0 +1,117 @@
+.card {
+    position: absolute;
+    margin-top: 40px;
+    margin-left: 18px;
+}
+
+.highlight {
+    font-size: 24px;
+    color: #2DD3A0;    
+    font-weight: 900;
+  }
+
+.text {
+    font-size: 24px;
+    font-weight: 500;
+}
+
+  .top-text {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 150%;
+    color: #212121;
+
+  }
+
+  .user-info-section {
+    margin-top: 180px;
+    margin-left: 18px;
+    margin-right: 18px;
+  }
+
+  .edit-info-section {
+    margin-top: 70px;
+    margin-left: 18px;
+    margin-right: 18px;
+  }
+
+  label {
+    font-weight: 500;
+    font-size: 16px;
+    color: #888888;
+  }
+
+  .gender-options {
+    display: flex;
+    gap: 8px;
+    margin-top: 20px;
+    margin-left: 6px;
+  }
+  
+  .gender-options input[type="radio"] {
+    display: none; 
+  }
+  
+  .gender-button {
+    display: inline-block;
+    padding: 12px 18px;
+    border: 1px solid #bdbdbd;
+    border-radius: 20px;
+    font-size: 16px;
+    font-weight: 500;
+    background-color: #fff;
+    color: #bdbdbd;
+    margin-bottom: 25px;
+  }
+  
+  .gender-options input[type="radio"]:checked + .gender-button {
+    background-color: #2DD3A0;
+    border-color: #2DD3A0;
+    color: white;
+  }
+  
+  input {
+    width: 100%;  
+    padding: 10px 12px;
+    margin-bottom: 25px;
+    font-size: 16px;
+    background-color: #f5f5f5;
+    border: none;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+
+  .input-wrapper {
+    position: relative;
+    margin-top: 10px;
+  }
+  
+  .input-wrapper .unit {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-190%);
+    color: #888;
+    font-size: 16px;
+    pointer-events: none;
+  }
+  
+  .double-field {
+    display: flex;
+    gap: 16px;
+  }
+  
+  .field-group {
+    flex: 1;
+  }
+  
+
+
+
+/*사파리에서 확인할 때 스핀 버튼 없애기*/ 
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}

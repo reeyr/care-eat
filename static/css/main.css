@@ -1,0 +1,334 @@
+
+/* top-bar */
+.title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.title-text {
+  font-weight: 700;
+  font-size: 20px;
+  margin-left: 10px;
+}
+
+.icon {
+  width: 30px;
+  height: 30px;
+  margin-right: 10px;
+  border-radius: 30px;
+  border: 1px solid rgba(189, 189, 189, 1);
+}
+
+/* 날짜 선택 */
+.date_text {
+  font-size: 14px;
+  color: rgba(33, 33, 33, 1);
+  margin-left: 10px;
+  font-weight: 500;
+  margin-top:10px ;
+}
+
+.date_select {
+  margin-top:10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  width: 375px;
+  text-align: center;
+}
+.day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+  padding: 6px 10px;
+  border-radius: 16px;
+  color: rgba(136, 136, 136, 1);
+  cursor: pointer;
+}
+
+.day_text {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* 선택된 날짜 (오늘 포함) */
+.day.active {
+  background-color: rgba(45, 211, 160, 1);
+  color: white;
+  font-weight: bold;
+  border-radius: 30px;
+}
+
+/* 칼로리 계산 */
+.calory-num{
+    display:flex;
+    justify-content: center;
+    align-items: baseline;
+}
+.calory-focus-num{
+    font-family: 'NanumSquareNeoBold', sans-serif;
+    font-weight: 900;
+    font: size 20px;
+}
+.calory-unfocus-num{
+    font-family: 'NanumSquareNeoBold', sans-serif;
+    font-weight: 900;
+    font-size:16px;
+    color: rgba(153, 153, 153, 1);
+}
+
+/* 칼로리 바 */
+.bar{
+    justify-items: center;
+    height:12px ;
+}
+.bar-wrapper {
+    width: 90%;
+    height: 12px;
+    background-color: #eee;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    background-color: #2dd3a0;
+    border-radius: 999px;
+    transition:  width 0.3s;
+}
+
+/* 상세 칼로리 */
+.calory{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 12px;
+    column-gap: 3px;
+}
+.calorys{
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 80px;
+}
+
+/* 식단 추가 */
+.meal-list {
+margin-top:10px
+}
+
+.meal-item {
+display: flex;
+justify-content: space-between;
+align-items: center;
+padding: 16px;
+border-bottom: 1px solid #eee;
+font-size: 16px;
+}
+
+.meal-name {
+flex: 1;
+color: #222;
+}
+
+.meal-kcal {
+color: #111;
+font-weight: bold;
+margin-right: 8px;
+}
+
+.meal-kcal.empty {
+color:rgba(136, 136, 136, 1);
+font-weight: normal;
+}
+
+.meal-add {
+font-size: 20px;
+margin-left: 5px;
+color: rgba(136, 136, 136, 1);
+cursor: pointer;
+}
+
+/* 식단 피드백 */
+.feedback{
+border-bottom:1px solid rgba(217, 217, 217, 1);
+}
+.feedback-toggle {
+display: flex;
+gap: 10px;
+align-items: center;
+padding: 16px;
+cursor: pointer;
+margin-top:30px;
+}
+
+/* 식단 판넬 */
+.feedback-panel {
+padding-left: 16px;
+padding-right: 16px;
+display: none;
+animation: fadeIn 0.3s ease;
+line-height: 150%;
+margin-bottom: 10px;
+}
+
+.feedback-panel .highlight {
+color: rgba(45, 211, 160, 1);
+font-weight: 700;
+}
+
+.suggestions {
+display: flex;
+font-size: 11px;
+gap: 10px;
+margin-top: 10px;
+}
+
+.suggestions .item {
+padding: 8px;
+text-align: center;
+width: 100px;
+letter-spacing:0px;
+line-height: 150%;
+}
+/*  부드럽게 나타나도록 애니메이션 */
+@keyframes fadeIn {
+from { opacity: 0; }
+to { opacity: 1; }
+}
+
+.label{
+font-family: 'NanumSquareNeoBold', sans-serif;
+  font-size: 20px;
+}
+.suggest_text1{
+font-size: 15px;
+font-weight: 500;
+}
+.suggest_text2{
+font-size:12px;
+font-weight: 700;
+line-height: 150%;
+}
+.suggest_img{
+/* width: 100px;
+height: 100px; */
+border-radius: 4px;
+border:1px,rgba(245, 245, 245, 1);
+}
+.item-text{
+font-size: 11px;
+font-weight: 500;
+text-align: left;
+}
+.item-num{
+margin-top:4px;
+font-size: 14px;
+font-weight: bold;
+text-align: left;
+}
+
+/* 운동 추천 */
+.exercise-toggle {
+display: flex;
+gap: 10px;
+align-items: center;
+padding: 16px;
+cursor: pointer;
+margin-top:10px;
+}
+
+/* 운동 추천 판넬*/
+.exercise-panel {
+padding-left: 16px;
+padding-right: 16px;
+display: none;
+animation: fadeIn 0.3s ease;
+line-height: 150%;
+margin-bottom: 10px;
+}
+
+.exercise-panel .highlight {
+color: rgba(45, 211, 160, 1);
+font-weight: 700;
+}
+
+.exercise-title{
+font-size:15px;
+font-weight: 700;
+color:rgba(85, 85, 85, 1);
+}
+
+.exercise-title{
+margin-top: 10px;
+}
+.card-slider{
+margin-top: 5px;
+overflow-x: auto;
+display: flex;
+flex-direction: row;
+gap:12px;
+scroll-snap-type: x mandatory;
+}
+.card-slider::-webkit-scrollbar {
+    display: none; /* 스크롤바 숨기기 */
+  }
+.card{
+    flex: 0 0 auto;
+    scroll-snap-align: start; /* 카드 정렬을 부드럽게 */
+}
+.card-title{
+font-size: 11px;
+font-weight: 500;
+line-height: 130%;
+}
+.youtube{
+    margin-top: 10px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+}
+.youtube-icon{
+width: 20px;
+height:14px;
+}
+.youtube-title{
+font-size: 10px;
+font-weight: 500;
+line-height: 130%;
+color: rgba(136, 136, 136, 1);
+}
+
+@media screen and (max-width: 768px) {
+  /* 날짜 선택만 wrap 허용 (이건 레이아웃상 안전) */
+  .date_select {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  /* 칼로리 정보 줄바꿈만 허용 */
+  .calorys {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 40px;
+  }
+
+  /* meal-item은 너비 좁아졌을 때만 wrap 허용 */
+  .meal-item {
+    flex-wrap: wrap;
+  }
+
+  /* 아래 요소들에는 wrap 절대 적용 금지 */
+  /* .suggestions, .feedback-toggle, .exercise-toggle → wrap 제거함 */
+}

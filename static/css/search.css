@@ -1,0 +1,310 @@
+.top-text {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 150%;
+    color: #212121;
+  }
+
+body {
+    margin: 0;
+    background-color: #f5f5f5;
+    height: 100vh;
+  }
+  
+  /* 고정 상단 영역 */
+  .top-area {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    background-color: white;
+    z-index: 10;
+    padding: 16px 0 16px;
+    box-shadow: none;
+  }
+
+  .done-button {
+    all: unset;
+    border: 1px solid #d9d9d9;
+    font-weight: 500;
+    font-size: 13px;
+    color: #888888;
+    border-radius: 30px;
+    background-color: #ffffff;
+    padding: 8px 14px;
+    position: absolute;
+    right: 20px;
+  }
+
+  .done-button.active {
+    color: #212121;
+  }
+  
+  #searchInput {
+    background-color: #f5f5f5;
+    color: #212121;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 20px;
+    border: none;
+    padding: 10px 20px;
+    width: calc(100% - 32px);
+    margin: 12px 16px 0;
+    box-sizing: border-box;
+    display: block;
+    margin-top: 20px;
+  }
+  
+  /* 결과 영역 (스크롤) */
+  .result-area {
+    position: absolute;
+    top: 137px; /* 고정 영역 높이만큼 여유 (고정 영역 높이 조절 시 수정 ) */
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow-y: auto;
+    padding: 16px;
+    background-color: white;
+    box-sizing: border-box;
+  }
+
+  .result-area.has-results {
+    background-color: #f5f5f5;
+  }
+  
+  /* 리스트 스타일 */
+  #resultList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  #resultList li {
+    background-color: #ffffff;
+    margin-bottom: 12px;
+    padding: 16px;
+    border-radius: 8px;
+    height: 53px;
+  }
+
+  #searchInput::placeholder {
+    color: #888888;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .food-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .left {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .right {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
+  }
+
+  .food-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #212121;
+    margin-top: 10px;
+  }
+
+  .food-volume {
+    font-weight: 500;
+    font-size: 12px;
+    color: #888888;
+    margin-top: 20px;
+  }
+
+  .food-kcal {
+    font-weight: 500;
+    font-size: 10px;
+    color: #212121;
+    margin-top: 13px;
+  }
+
+  .add-button {
+    width: 26px;
+    height: 26px;
+    background-color: #f5f5f5;
+    border-radius: 50%;
+    border: none;
+    color: #888888;
+    font-weight: 500;
+    font-size: 20px;
+    display: flex; 
+    justify-content: center;
+    align-items: center;
+    line-height: 26px; /* 높이를 버튼 높이와 맞춰서 수직 중앙 */
+  }
+
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #00000099;
+    justify-content: center;
+    align-items: flex-end;
+    z-index: 1000;
+  }
+  
+  .modal {
+    width: 100%;
+    height: 55vh;
+    background: white;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    padding: 16px;
+  }
+  
+  .modal-content {
+    width: 100%;
+    height: 55vh;
+  }
+
+  .modal-overlay.hidden {
+    display: none;
+  }
+
+  .modal-title {
+    font-size: 24px;
+    font-weight: 700;
+    text-align: center;
+    padding-top: 30px;
+  }
+
+  .detail-box {
+    background-color: #f5f5f5;
+    border-radius: 12px;
+    padding: 16px 0px;
+    margin-top: 30px;
+    height: 100px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    position: relative;
+  }
+
+  .detail-item {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+  
+  .detail-item.left {
+    text-align: left;
+    align-items: center;   
+  }
+
+  .detail-item.center {
+    text-align: center;
+    align-items: center;   
+  }
+
+  .detail-item.right {
+    text-align: right;
+    align-items: center;   
+  }
+
+  .detail {
+    font-size: 14px;
+    font-weight: 500;
+    color: hsl(0, 0%, 27%);
+    margin-top: 5px ;
+    margin-bottom: 4px;
+  }
+
+  .content {
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .kcal-info {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-weight: 900;
+    font-size: 20px;
+  }
+
+  .volume-box {
+    background-color: #f5f5f5;
+    border-radius: 100px;
+    padding: 8px;
+    margin-top: 15px;
+    height: 40px;
+    display: flex;
+  }
+
+  .amount {
+    background-color: #ffffff;
+    border-radius: 30px;
+    padding: 8px;
+    width: 50%;
+    height: 24px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .amount-info {
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+  }
+    
+  .count-box {
+    background-color: #f5f5f5;
+    border-radius: 100px;
+    padding: 8px;
+    margin-top: 15px;
+    height: 45px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .count-btn {
+    border: none;
+    background-color: #f5f5f5;
+    width: 42px;
+    height: 42px;
+    font-size: 25px;
+    color: #212121;
+  }
+  
+  .count-number {
+    font-size: 20px;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  /* 갯수 버튼 */
+  .saved-count-badge {
+    background-color: #2DD3A0;
+    color: white;
+    font-weight: bold;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    text-align: center;
+    line-height: 17px;
+    position: absolute; 
+    top: -6px;
+    right: 20px;
+    font-size: 10px;
+  }
+  

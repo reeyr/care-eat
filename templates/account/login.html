@@ -1,0 +1,24 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인</title>
+    <link rel="stylesheet" href="{% static 'css/Login.css' %}">
+    <link rel="stylesheet" href="{% static 'css/common.css' %}">
+</head>
+<body>
+    <div class="container">
+        <section class="card">
+            <p><span class="highlight">케어잇</span><span class="text">과 함께</span></p>
+            <p class="text">식단을 기록해보세요</p>
+            <img src="{% static 'images/Logo.jpeg' %}" alt="로고 이미지" class="logo">
+        </section>
+        <a href="http://localhost:8000/accounts/google/login/" class="kakao-button">
+            <img src="{% static 'images/Google.png' %}" alt="구글 아이콘" class="icon">
+            <span>구글로 시작하기</span>
+        </a>
+    </div>
+</body>
+</html>

@@ -1,6 +1,72 @@
-<h1>회원 정보 등록</h1>
-<form method="post">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">회원정보 등록</button>
-</form>
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>상세 정보 입력</title>
+    <link rel="stylesheet" href="{% static 'css/info.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/common.css' %}" />
+</head>
+<body>
+
+    <div class="top-bar">
+        <button class="back-button">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M15 18L9 12L15 6" stroke="#212121" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+        </button>
+        <span class="top-text">신체 정보 등록</span>
+    </div>
+
+    <section class="card">
+        <p><span class="highlight">{{ user.username }}</span><span class="text">님 맞춤</span></p>
+        <p class="text">권장 칼로리 계산 시작!</p>
+    </section>
+
+    <!-- 1. form 태그 추가, method=POST, action은 서버 URL -->
+    <form method="POST" action="{% url 'accounts:profile_register' %}">
+        {% csrf_token %}
+
+        <section class="user-info-section">
+
+            <label for="gender">성별</label>
+            <div class="gender-options">
+                <input type="radio" id="female" name="gender" value="F" />
+                <label for="female" class="gender-button">여성</label>
+
+                <input type="radio" id="male" name="gender" value="M" />
+                <label for="male" class="gender-button">남성</label>
+            </div>
+
+            <label for="age">나이</label>
+            <div class="input-wrapper">
+                <input type="number" id="age" name="age" required />
+                <span class="unit">세</span>
+            </div>
+
+            <div class="double-field">
+                <div class="field-group">
+                    <label for="height">키</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="height" name="height" required />
+                        <span class="unit">cm</span>
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label for="weight">몸무게</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="weight" name="weight" required />
+                        <span class="unit">kg</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. 버튼을 submit 타입으로 -->
+            <button type="submit" class="save">회원정보 등록</button>
+        </section>
+    </form>
+
+</body>
+</html>

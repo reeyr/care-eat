@@ -19,8 +19,8 @@ from .services import (
 
 
 class FoodListCreateView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-    #permission_classes = [permissions.AllowAny]
+    # permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     #음식 목록 조회
     def get(self, request):
