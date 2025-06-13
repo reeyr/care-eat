@@ -10,15 +10,19 @@ from .models import Food
 #API_URL = "https://api.data.go.kr/openapi/tn_pubr_public_nutri_food_info_api"
 #API_KEY = os.getenv('FOOD_API_KEY', "HqkZncN4ctZWUQO6gcx3NBpyVq%2B%2Fu23Q7Z2JEmI2XP2DlsxuI%2FwFuaKnTMQCjoK6LcJebFvHhYzc9CDtmLCqyg%3D%3D")
 
+
+API_URL = os.getenv("FOOD_API_URL")
+API_KEY = os.getenv('FOOD_API_KEY')
+
 #음식생성
-def create_food(name: str, kcal_per_unit: float, unit: str,
+def create_food(name: str, kcal: float, unit: str,
                 description: str = "") -> Food:
     #중복 이름 체크
     if Food.objects.filter(name__iexact=name).exists():
         raise ValueError("이미 존재하는 음식 이름입니다.")
 
     #유효성 검증
-    if kcal_per_unit <= 0:
+    if kcal <= 0:
         raise ValueError("칼로리는 0보다 커야 합니다.")
 
     if not name.strip():
@@ -30,7 +34,7 @@ def create_food(name: str, kcal_per_unit: float, unit: str,
     try:
         return Food.objects.create(
             name=name.strip(),
-            kcal_per_unit=kcal_per_unit,
+            kcal=kcal,
             unit=unit.strip(),
             description=description.strip()
         )
@@ -57,7 +61,7 @@ def get_food_by_id(food_id: int) -> Food:
 
 #음식 정보 수정
 def update_food(food_id: int, name: Optional[str] = None,
-                kcal_per_unit: Optional[float] = None,
+                kcal: Optional[float] = None,
                 unit: Optional[str] = None,
                 description: Optional[str] = None) -> Food:
     food = get_food_by_id(food_id)
@@ -69,10 +73,10 @@ def update_food(food_id: int, name: Optional[str] = None,
         food.name = name.strip()
 
     #칼로리 유효성 검증
-    if kcal_per_unit is not None:
-        if kcal_per_unit <= 0:
+    if kcal is not None:
+        if kcal <= 0:
             raise ValueError("칼로리는 0보다 커야 합니다.")
-        food.kcal_per_unit = kcal_per_unit
+        food.kcal = kcal
 
     #단위 유효성 검증
     if unit is not None:
@@ -119,7 +123,7 @@ def foodApi(food_name: str):
         params = {
             'serviceKey': API_KEY,
             'desc_kor': food_name,
-            'numOfRows': 1,
+            'numOfRows': 10,
             'pageNo': 1,
             'type': 'json'
         }
@@ -128,17 +132,17 @@ def foodApi(food_name: str):
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
 
-        print("📦 API 요청 파라미터:", params)
+        print("테스트API 요청 파라미터:", params)
 
         response = requests.get(API_URL, params=params, headers=headers, timeout=10)
 
-        print("📡 응답 상태 코드:", response.status_code)
+        print("테스트응답 상태 코드:", response.status_code)
 
         if response.status_code != 200:
             raise ValueError(f"API 요청 실패: {response.status_code}")
 
         data = response.json()
-        print("🧾 JSON 응답 데이터:", data)
+        print("테스트JSON 응답 데이터:", data)
 
         items = data.get('body', {}).get('items', [])
         if not items:
@@ -165,15 +169,15 @@ def foodApi(food_name: str):
 
         food = Food.objects.create(
             name=name.strip(),
-            kcal_per_unit=kcal_float,
+            kcal=kcal_float,
             unit='100g',
             description=f"{serving}g 기준" if serving else "API에서 가져온 정보"
         )
 
-        print(f"새로운 음식 생성: {food.name} ({food.kcal_per_unit}kcal/{food.unit})")
+        print(f"새로운 음식 생성: {food.name} ({food.kcal}kcal/{food.unit})")
         return {
             "name": food.name,
-            "kcal_per_unit": food.kcal_per_unit,
+            "kcal": food.kcal,
             "unit": food.unit,
             "carbohydrate": carbs,
             "protein": protein,
