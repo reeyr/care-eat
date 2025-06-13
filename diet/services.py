@@ -6,6 +6,7 @@ from django.db.models import Sum, Q
 from typing import Optional
 from datetime import date, timedelta
 
+
 #식단 등록
 def create_diet(user, food_id: int, time_slot: str, quantity: float,
                 date: Optional[date] = None, memo: str = "") -> Diet:
@@ -88,7 +89,7 @@ def get_daily_calories(user, target_date: date) -> dict:
             "food_name": diet.food.name,
             "food_unit": diet.food.unit,
             "quantity": float(diet.quantity),
-            "kcal_per_unit": float(diet.food.kcal_per_unit),
+            "kcal": float(diet.food.kcal),
             "total_kcal": kcal,
             "time_slot": diet.time_slot,
             "time_slot_display": diet.get_time_slot_display(),

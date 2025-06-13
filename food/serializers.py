@@ -4,7 +4,7 @@ from .models import Food
 class FoodSerializer(serializers.ModelSerializer):
     class Meta:
         model = Food
-        fields = ['id', 'name', 'kcal_per_unit', 'unit', 'description', 'created_at', 'updated_at']
+        fields = ['id', 'name', 'kcal', 'unit', 'description', 'created_at', 'updated_at']
         read_only_fields = ['id', 'created_at', 'updated_at']
 
         def validate_name(self, value):
@@ -24,4 +24,4 @@ class FoodSimpleSerializer(serializers.ModelSerializer):
     #간단한 음식 정보만
     class Meta:
         model = Food
-        fields = ['id', 'name', 'kcal_per_unit', 'unit']
+        fields = ['id', 'name', 'kcal', 'unit']

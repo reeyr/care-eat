@@ -6,7 +6,12 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions, status
+from rest_framework.permissions import AllowAny
+from rest_framework.renderers import JSONRenderer
 from .models import Food
+import os
+from django.conf import settings
+import urllib.parse
 from .serializers import FoodSerializer, FoodSimpleSerializer
 from .services import (
     get_all_foods,
@@ -20,7 +25,6 @@ from .services import (
 
 class FoodListCreateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    #permission_classes = [permissions.AllowAny]
 
     #음식 목록 조회
     def get(self, request):
@@ -36,7 +40,7 @@ class FoodListCreateView(APIView):
             try:
                 food = create_food(
                     name=serializer.validated_data['name'],
-                    kcal_per_unit=serializer.validated_data['kcal_per_unit'],
+                    kcal=serializer.validated_data['kcal'],
                     unit=serializer.validated_data['unit'],
                     description=serializer.validated_data.get('description', '')
                 )
@@ -52,8 +56,8 @@ class FoodListCreateView(APIView):
 
 
 class FoodDetailView(APIView):
+
     permission_classes = [permissions.IsAuthenticated]
-    #permission_classes = [permissions.AllowAny]
 
     #음식 상세 조회
     def get(self, request, pk):
@@ -72,7 +76,7 @@ class FoodDetailView(APIView):
                 food = update_food(
                     food_id=pk,
                     name=serializer.validated_data.get('name'),
-                    kcal_per_unit=serializer.validated_data.get('kcal_per_unit'),
+                    kcal=serializer.validated_data.get('kcal'),
                     unit=serializer.validated_data.get('unit'),
                     description=serializer.validated_data.get('description')
                 )
@@ -95,7 +99,7 @@ class FoodDetailView(APIView):
                 updated_food = update_food(
                     food_id=pk,
                     name=serializer.validated_data.get('name'),
-                    kcal_per_unit=serializer.validated_data.get('kcal_per_unit'),
+                    kcal=serializer.validated_data.get('kcal'),
                     unit=serializer.validated_data.get('unit'),
                     description=serializer.validated_data.get('description')
                 )
@@ -115,7 +119,6 @@ class FoodDetailView(APIView):
 
 class PopularFoodsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    #permission_classes = [permissions.AllowAny]
 
     #음식 인기 조회
     def get(self, request):
@@ -127,107 +130,100 @@ class PopularFoodsView(APIView):
 
 #API 연결용 뷰
 class ExternalFoodImportView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-    #permission_classes = [permissions.AllowAny]
+    renderer_classes = [JSONRenderer]
+    permission_classes = [AllowAny]
 
     def get(self, request):
-        #print("ExternalFoodImportView 호출됨")
         query = request.GET.get('query')
         if not query:
             return Response({'error': '검색어가 필요합니다.'}, status=400)
 
+        api_key = os.getenv('FOOD_API_KEY')
+        base_url = settings.FOOD_API_URL
+
+        print("✅ settings에서 불러온 FOOD_API_URL:", settings.FOOD_API_URL)
+        print("🌐 사용할 BASE URL:", base_url)
+
         params = {
-            'serviceKey': 'HqkZncN4ctZWUQO6gcx3NBpyVq%2B%2Fu23Q7Z2JEmI2XP2DlsxuI%2FwFuaKnTMQCjoK6LcJebFvHhYzc9CDtmLCqyg%3D%3D',
+            'serviceKey': urllib.parse.quote_plus(os.getenv("FOOD_API_KEY")),
             'desc_kor': query,
-            'numOfRows': 1,
             'pageNo': 1,
+            'numOfRows': 10,
             'type': 'json'
         }
-
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-
         try:
             response = requests.get(
-                "https://api.data.go.kr/openapi/tn_pubr_public_nutri_food_info_api",
+                base_url,
                 params=params,
-                headers=headers,
-                timeout=10
+                timeout=30
             )
 
-            print("📦 API 요청 파라미터:", params)
-            print("📡 응답 상태 코드:", response.status_code)
+            print("🌐 응답 상태 코드:", response.status_code)
+            print("📄 응답 본문 내용 (일부):", response.text[:300])
 
             if response.status_code != 200:
+                return Response({'error': f'API 요청 실패: {response.status_code}'}, status=500)
+
+            data = response.json()
+            items = data.get('body', {}).get('items', [])
+            if not items:
                 return Response({
-                    'error': f'API 요청 실패: {response.status_code}'
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                    'error': '해당 식품 정보를 찾을 수 없습니다.'
+                }, status=404)
+
+            # For simplicity, take the first item
+            item = items[0]
+
+            name = item.get('DESC_KOR')
+            kcal = item.get('NUTR_CONT1')
+            serving = item.get('SERVING_WT')
+            protein = item.get('NUTR_CONT2')
+            fat = item.get('NUTR_CONT3')
+            carbs = item.get('NUTR_CONT4')
 
             try:
-                data = response.json()
-                header = data.get('header', {})
-                if header.get('resultCode') != "00":
-                    return JsonResponse({
-                        'error': f"API 에러: {header.get('resultMsg', '알 수 없는 오류')}"
-                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                food, created = Food.objects.get_or_create(
+                    name=name,
+                    defaults={
+                        'kcal': float(kcal) if kcal else 0,
+                        'unit': serving or '100g',
+                        'description': '외부 API에서 가져온 식품 정보'
+                    }
+                )
 
-                items = data.get('body', {}).get('items', [])
-                if not items:
-                    return JsonResponse({
-                        'error': '해당 식품 정보를 찾을 수 없습니다.'
-                    }, status=404)
-
-                item = items[0]
-                name = item.get("DESC_KOR")
-                kcal = item.get("NUTR_CONT1")  # 에너지
-                serving = item.get("SERVING_WT")
-                protein = item.get("NUTR_CONT2")
-                fat = item.get("NUTR_CONT3")
-                carbs = item.get("NUTR_CONT4")
-
-                try:
-                    food, created = Food.objects.get_or_create(
-                        name=name,
-                        defaults={
-                            'kcal_per_unit': float(kcal) if kcal else 0,
-                            'unit': serving or '100g',
-                            'description': f'외부 API에서 가져온 식품 정보'
-                        }
-                    )
-
-                    return Response({
-                        'success': True,
-                        'created': created,
-                        'data': {
-                            'id': food.id,
-                            'name': name,
-                            'kcal': float(kcal) if kcal else 0,
-                            'serving': serving,
-                            'protein': float(protein) if protein else 0,
-                            'fat': float(fat) if fat else 0,
-                            'carbohydrates': float(carbs) if carbs else 0,
-                        }
-                    })
-                except Exception as db_error:
-                    return Response({
-                        'success': True,
-                        'created': False,
-                        'warning': f'DB 저장 실패: {str(db_error)}',
-                        'data': {
-                            'name': name,
-                            'kcal': float(kcal) if kcal else 0,
-                            'serving': serving,
-                            'protein': float(protein) if protein else 0,
-                            'fat': float(fat) if fat else 0,
-                            'carbohydrates': float(carbs) if carbs else 0,
-                        }
-                    })
-
-            except ValueError as e:
                 return Response({
-                    'error': f'JSON 파싱 에러: {str(e)}'
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                    'success': True,
+                    'created': created,
+                    'data': {
+                        'id': food.id,
+                        'name': name,
+                        'kcal': float(kcal) if kcal else 0,
+                        'serving': serving,
+                        'protein': float(protein) if protein else 0,
+                        'fat': float(fat) if fat else 0,
+                        'carbohydrates': float(carbs) if carbs else 0,
+                    }
+                })
+
+            except Exception as db_error:
+                return Response({
+                    'success': True,
+                    'created': False,
+                    'warning': f'DB 저장 실패: {str(db_error)}',
+                    'data': {
+                        'name': name,
+                        'kcal': float(kcal) if kcal else 0,
+                        'serving': serving,
+                        'protein': float(protein) if protein else 0,
+                        'fat': float(fat) if fat else 0,
+                        'carbohydrates': float(carbs) if carbs else 0,
+                    }
+                })
+
+        except ValueError as e:
+            return Response({
+                'error': f'JSON 파싱 에러: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         except requests.exceptions.RequestException as e:
             return Response({
