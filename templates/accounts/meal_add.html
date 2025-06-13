@@ -61,15 +61,18 @@
 <script>
   const deleteIconUrl = "{% static 'images/x.png' %}";
   
-document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', () => {
   const selectedMeal = localStorage.getItem('selectedMeal');
   const selectedDate = localStorage.getItem("selectedDate") || new Date().toISOString().slice(0, 10);
   const savedMealsKey = `meals-${selectedDate}-${selectedMeal}`;
   const existingMeals = JSON.parse(localStorage.getItem(savedMealsKey)) || [];
-  const tempMeals = JSON.parse(localStorage.getItem('savedMeals')) || [];
-  window.combinedMeals = [...existingMeals, ...tempMeals];
+  const tempMeals = JSON.parse(localStorage.getItem('savedMeals'));
 
-
+  if (tempMeals) {
+    window.combinedMeals = tempMeals;
+  } else {
+    window.combinedMeals = existingMeals;
+  }
 
   renderMeals();
 
