@@ -58,37 +58,232 @@
     </div>
   </div>
 
-<script>
+  <script>
+  const API_BASE_URL = 'http://localhost:8000/api/diet';
+  
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.startsWith(name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  const csrftoken = getCookie('csrftoken');
   const deleteIconUrl = "{% static 'images/x.png' %}";
   
-  document.addEventListener('DOMContentLoaded', () => {
+  const timeSlotMapping = {
+    '아침': 'breakfast',
+    '점심': 'lunch',
+    '저녁': 'dinner',
+    '간식': 'snack'
+};
+
+document.addEventListener('DOMContentLoaded', async () => {
   const selectedMeal = localStorage.getItem('selectedMeal');
   const selectedDate = localStorage.getItem("selectedDate") || new Date().toISOString().slice(0, 10);
-  const savedMealsKey = `meals-${selectedDate}-${selectedMeal}`;
-  const existingMeals = JSON.parse(localStorage.getItem(savedMealsKey)) || [];
-  const tempMeals = JSON.parse(localStorage.getItem('savedMeals'));
 
-  if (tempMeals) {
-    window.combinedMeals = tempMeals;
+  const tempMeals = JSON.parse(localStorage.getItem('savedMeals'));
+  
+  if (tempMeals && tempMeals.length > 0) {
+    const existingMeals = await fetchMealsFromAPI(selectedDate, selectedMeal);
+    window.combinedMeals = [...existingMeals, ...tempMeals];
   } else {
-    window.combinedMeals = existingMeals;
+    window.combinedMeals = await fetchMealsFromAPI(selectedDate, selectedMeal);
   }
 
   renderMeals();
 
-  document.querySelector('.save').addEventListener('click', () => {
-    localStorage.setItem(savedMealsKey, JSON.stringify(window.combinedMeals));
-    localStorage.removeItem('savedMeals');
-    localStorage.removeItem('selectedMeal');
-    window.location.href = '{% url "accounts:home" %}';
+  document.querySelector('.save').addEventListener('click', async () => {
+    const success = await saveMealsToAPI(selectedDate, selectedMeal, window.combinedMeals);
+    if (success) {
+      localStorage.removeItem('savedMeals');
+      localStorage.removeItem('selectedMeal');
+      window.location.href = '{% url "accounts:home" %}';
+    } else {
+      alert('식단 저장에 실패했습니다.');
+    }
   });
 
   document.getElementById('add-food-btn').addEventListener('click', () => {
-    localStorage.setItem('savedMeals', JSON.stringify(window.combinedMeals));
+    const newMeals = window.combinedMeals.filter(meal => meal.food_id && !meal.id);
+    localStorage.setItem('savedMeals', JSON.stringify(newMeals));
     localStorage.setItem('returnToMealAdd', 'true');
     window.location.href = '{% url "accounts:search" %}';
   });
 });
+
+async function fetchMealsFromAPI(date, meal) {
+  try {
+    const englishTimeSlot = timeSlotMapping[meal];
+    const response = await fetch(`${API_BASE_URL}?date=${date}&time_slot=${englishTimeSlot}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrftoken
+      },
+      credentials: 'include'
+    });
+
+    if (!response.ok) {
+      console.error('식단 데이터 가져오기 실패:', response.status);
+      return [];
+    }
+
+    const data = await response.json();
+    
+    return data.map(diet => ({
+      id: diet.id, 
+      food_id: diet.food.id, 
+      name: diet.food.name,
+      volume: diet.food.unit,
+      count: diet.quantity,
+      kcal: `${Math.round(diet.total_kcal)}kcal`,
+      carb: "0g", // API에 영양성분 정보가 없으므로 기본값
+      protein: "0g",
+      fat: "0g"
+    }));
+
+  } catch (error) {
+    console.error('API 호출 중 오류:', error);
+    return [];
+  }
+}
+
+async function saveMealsToAPI(selectedDate, selectedMeal, meals) {
+  try {
+    const englishTimeSlot = timeSlotMapping[selectedMeal];
+    
+    // 기존 식단과 새 식단을 구분
+    const existingMeals = meals.filter(meal => meal.id); // ID가 있는 기존 식단
+    const newMeals = meals.filter(meal => !meal.id); // ID가 없는 새 식단
+    
+    const promises = [];
+
+    existingMeals.forEach(meal => {
+      const dietData = {
+        food_id: meal.food_id,
+        time_slot: englishTimeSlot,
+        quantity: meal.count,
+        date: selectedDate,
+        memo: ""
+      };
+
+      promises.push(
+        fetch(`${API_BASE_URL}/${meal.id}/`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+          },
+          credentials: 'include',
+          body: JSON.stringify(dietData)
+        })
+      );
+    });
+    
+    newMeals.forEach(meal => {
+      const dietData = {
+        food_id: meal.food_id,
+        time_slot: englishTimeSlot,
+        quantity: meal.count,
+        date: selectedDate,
+        memo: ""
+      };
+
+      promises.push(
+        fetch(`${API_BASE_URL}/create/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+          },
+          credentials: 'include',
+          body: JSON.stringify(dietData)
+        })
+      );
+    });
+
+    const responses = await Promise.all(promises);
+    const allSuccess = responses.every(response => response.ok);
+    
+    if (allSuccess) {
+      console.log('모든 식단이 성공적으로 저장되었습니다.');
+      return true;
+    } else {
+      console.error('일부 식단 저장에 실패했습니다.');
+
+      responses.forEach((response, index) => {
+        if (!response.ok) {
+          console.error(`요청 ${index} 실패:`, response.status, response.statusText);
+        }
+      });
+      return false;
+    }
+
+  } catch (error) {
+    console.error('식단 저장 중 오류:', error);
+    return false;
+  }
+}
+
+async function deleteExistingMeals(date, timeSlot) {
+  try {
+
+    const response = await fetch(`${API_BASE_URL}/?date=${date}&time_slot=${timeSlot}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrftoken
+      },
+      credentials: 'include'
+    });
+
+    if (response.ok) {
+      const existingMeals = await response.json();
+    
+      const deletePromises = existingMeals.map(meal => 
+        fetch(`${API_BASE_URL}/${meal.id}/`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+          },
+          credentials: 'include'
+        })
+      );
+
+      await Promise.all(deletePromises);
+    }
+  } catch (error) {
+    console.error('기존 식단 삭제 중 오류:', error);
+  }
+}
+
+async function deleteMealFromAPI(mealId) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/${mealId}/`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrftoken
+      },
+      credentials: 'include'
+    });
+
+    return response.ok;
+  } catch (error) {
+    console.error('식단 삭제 중 오류:', error);
+    return false;
+  }
+}
 
 function renderMeals() {
   const selectedMeal = localStorage.getItem('selectedMeal');
@@ -110,14 +305,24 @@ function renderMeals() {
         <img class="item-right-icon" src="${deleteIconUrl}" alt="삭제" data-index="${index}"/>
       </div>
     `;
-    item.querySelector('.item-right-icon').addEventListener('click', (e) => {
+    
+    item.querySelector('.item-right-icon').addEventListener('click', async (e) => {
+      if (meal.id) {
+        const success = await deleteMealFromAPI(meal.id);
+        if (!success) {
+          alert('식단 삭제에 실패했습니다.');
+          return;
+        }
+      }
       window.combinedMeals.splice(index, 1);
       renderMeals();
     });
+
     item.addEventListener('click', (e) => {
       if (e.target.classList.contains('item-right-icon')) return;
       openEditModal(meal, index);
     });
+
     foodList.appendChild(item);
   });
 
@@ -134,7 +339,7 @@ function updateSummary() {
     return acc;
   }, { kcal: 0, carb: 0, protein: 0, fat: 0 });
 
-  document.querySelector('.kcal').innerHTML = `${total.kcal} <span class="kcal-text">kcal</span>`;
+  document.querySelector('.kcal').innerHTML = `${Math.round(total.kcal)} <span class="kcal-text">kcal</span>`;
   document.querySelectorAll('.kcal-item')[0].querySelector('.kcal-item-num').textContent = `${total.carb}g`;
   document.querySelectorAll('.kcal-item')[1].querySelector('.kcal-item-num').textContent = `${total.protein}g`;
   document.querySelectorAll('.kcal-item')[2].querySelector('.kcal-item-num').textContent = `${total.fat}g`;
@@ -205,17 +410,60 @@ function openEditModal(meal, index) {
         updateDisplay();
       }
     });
-    document.getElementById('modal-save').addEventListener('click', () => {
+    document.getElementById('modal-save').addEventListener('click', async () => {
+
       meal.count = count;
       meal.kcal = `${format(base.kcal * count)}kcal`;
       meal.carb = `${format(base.carb * count)}g`;
       meal.protein = `${format(base.protein * count)}g`;
       meal.fat = `${format(base.fat * count)}g`;
+
       window.combinedMeals.splice(index, 1, { ...meal });
       closeModal();
       renderMeals();
     });
   }, 0);
+}
+
+
+async function updateMealInAPI(meal) {
+  try {
+    const selectedMeal = localStorage.getItem('selectedMeal');
+    const selectedDate = localStorage.getItem("selectedDate") || new Date().toISOString().slice(0, 10);
+    const englishTimeSlot = timeSlotMapping[selectedMeal];
+
+    if (!meal.food_id) {
+      return false;
+    }
+
+    const dietData = {
+      food_id: meal.food_id,
+      time_slot: englishTimeSlot,
+      quantity: meal.count,
+      date: selectedDate,
+      memo: ""
+    };
+
+    const response = await fetch(`${API_BASE_URL}/${meal.id}/`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrftoken
+      },
+      credentials: 'include',
+      body: JSON.stringify(dietData)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API 응답 오류:', response.status, errorText);
+    }
+
+    return response.ok;
+  } catch (error) {
+    console.error('식단 수정 중 오류:', error);
+    return false;
+  }
 }
 
 function closeModal() {

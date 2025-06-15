@@ -195,163 +195,265 @@
 </div>
 
 <script>
+    const API_BASE_URL = 'http://localhost:8000/api/diet';
     
-function getTodayDate() {
-    const today = new Date();
-    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-}
-
-function goToSearch(e) {
-    const meal = e.target.dataset.meal;
-    const searchUrl = "{% url 'accounts:search' %}";
-    console.log("이동할 경로:", `${searchUrl}?meal=${encodeURIComponent(meal)}`);
-    location.href = `${searchUrl}?meal=${encodeURIComponent(meal)}`;
-}
-
-
-
-
-
-window.addEventListener("DOMContentLoaded", () => {
-  // 주간 날짜 렌더링 및 선택 날짜 설정
-  const today = new Date();
-  const monthText = document.getElementById("month-text");
-  const dateSelect = document.getElementById("date-select");
-  const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
-  const startOfWeek = new Date(today);
-  startOfWeek.setDate(today.getDate() - today.getDay()); // 이번주 일요일
-
-  monthText.textContent = `${today.getMonth() + 1}월`;
-
-  for (let i = 0; i < 7; i++) {
-    const currentDay = new Date(startOfWeek);
-    currentDay.setDate(startOfWeek.getDate() + i);
-
-    const date = currentDay.getDate();
-    const isToday = currentDay.toDateString() === today.toDateString();
-    const dayText = isToday ? "오늘" : weekdays[i];
-
-    const year = currentDay.getFullYear();
-    const month = String(currentDay.getMonth() + 1).padStart(2, '0');
-    const day = String(currentDay.getDate()).padStart(2, '0');
-    const dateKey = `${year}-${month}-${day}`;
-
-    const dayDiv = document.createElement("div");
-    dayDiv.className = "day";
-
-    // localStorage 저장된 날짜와 비교해서 활성화 표시
-    const savedSelectedDate = localStorage.getItem("selectedDate");
-    if (savedSelectedDate === dateKey || (!savedSelectedDate && isToday)) {
-      dayDiv.classList.add("active");
-      if (!savedSelectedDate) localStorage.setItem("selectedDate", dateKey); // 기본값 저장
+    // CSRF 토큰 가져오기
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.startsWith(name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
     }
 
-    dayDiv.innerHTML = `
-      <div>${date}</div>
-      <div class="day_text">${dayText}</div>
-    `;
+    function getTodayDate() {
+      const today = new Date();
+      return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    }
 
-    dayDiv.addEventListener("click", () => {
-      document.querySelectorAll(".day").forEach(el => el.classList.remove("active"));
-      dayDiv.classList.add("active");
-      localStorage.setItem("selectedDate", dateKey);
-      location.reload(); // 날짜 바뀌면 새로고침해서 데이터 갱신
+    function goToSearch(e) {
+      const meal = e.target.dataset.meal;
+      const searchUrl = "{% url 'accounts:search' %}";
+      console.log("이동할 경로:", `${searchUrl}?meal=${encodeURIComponent(meal)}`);
+      location.href = `${searchUrl}?meal=${encodeURIComponent(meal)}`;
+    }
+
+    async function fetchDietList(date) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/?date=${date}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+          },
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          console.error("식단 리스트 불러오기 실패:", response.status);
+          return [];
+        }
+        
+        const data = await response.json();
+        return data;
+      } catch (error) {
+        console.error("API 호출 중 오류 발생:", error);
+        return [];
+      }
+    }
+
+    async function fetchDailyCalories(date) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/calories/?date=${date}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+          },
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          console.error("일일 칼로리 불러오기 실패:", response.status);
+          return null;
+        }
+        
+        return await response.json();
+      } catch (error) {
+        console.error("칼로리 API 호출 중 오류 발생:", error);
+        return null;
+      }
+    }
+
+    const timeSlotMapping = {
+      '아침': 'breakfast',
+      '점심': 'lunch', 
+      '저녁': 'dinner',
+      '간식': 'snack'
+    };
+
+    const timeSlotReverseMapping = {
+      'breakfast': '아침',
+      'lunch': '점심',
+      'dinner': '저녁', 
+      'snack': '간식'
+    };
+
+    window.addEventListener("DOMContentLoaded", async () => {
+      const today = new Date();
+      const monthText = document.getElementById("month-text");
+      const dateSelect = document.getElementById("date-select");
+      const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+      const startOfWeek = new Date(today);
+      startOfWeek.setDate(today.getDate() - today.getDay());
+
+      monthText.textContent = `${today.getMonth() + 1}월`;
+
+      for (let i = 0; i < 7; i++) {
+        const currentDay = new Date(startOfWeek);
+        currentDay.setDate(startOfWeek.getDate() + i);
+
+        const date = currentDay.getDate();
+        const isToday = currentDay.toDateString() === today.toDateString();
+        const dayText = isToday ? "오늘" : weekdays[i];
+
+        const year = currentDay.getFullYear();
+        const month = String(currentDay.getMonth() + 1).padStart(2, '0');
+        const day = String(currentDay.getDate()).padStart(2, '0');
+        const dateKey = `${year}-${month}-${day}`;
+
+        const dayDiv = document.createElement("div");
+        dayDiv.className = "day";
+
+        // localStorage에서 선택된 날짜 확인
+        const savedSelectedDate = localStorage.getItem("selectedDate");
+        if (savedSelectedDate === dateKey || (!savedSelectedDate && isToday)) {
+          dayDiv.classList.add("active");
+          if (!savedSelectedDate) localStorage.setItem("selectedDate", dateKey);
+        }
+
+        dayDiv.innerHTML = `
+          <div>${date}</div>
+          <div class="day_text">${dayText}</div>
+        `;
+
+        dayDiv.addEventListener("click", () => {
+          document.querySelectorAll(".day").forEach(el => el.classList.remove("active"));
+          dayDiv.classList.add("active");
+          localStorage.setItem("selectedDate", dateKey);
+          location.reload(); // 날짜 바뀌면 새로고침해서 데이터 갱신
+        });
+
+        dateSelect.appendChild(dayDiv);
+      }
+
+      const selectedDate = localStorage.getItem("selectedDate") || getTodayDate();
+      
+      try {
+        const [diets, dailyCalories] = await Promise.all([
+          fetchDietList(selectedDate),
+          fetchDailyCalories(selectedDate)
+        ]);
+
+        const mealTypes = ['아침', '점심', '저녁', '간식'];
+        const mealsData = {};
+        
+        mealTypes.forEach(meal => {
+          const englishTimeSlot = timeSlotMapping[meal];
+          mealsData[meal] = diets.filter(diet => diet.time_slot === englishTimeSlot);
+        });
+
+        let totalKcal = 0;
+        mealTypes.forEach(meal => {
+          const meals = mealsData[meal] || [];
+          const mealKcal = meals.reduce((acc, cur) => {
+            return acc + (cur.total_kcal || 0);
+          }, 0);
+
+          const kcalSpan = [...document.querySelectorAll('.meal-item')].find(
+            item => item.querySelector('.meal-name')?.textContent === meal
+          )?.querySelector('.meal-kcal');
+
+          if (kcalSpan) {
+            kcalSpan.textContent = `${Math.round(mealKcal)}Kcal`;
+            kcalSpan.classList.toggle('empty', mealKcal === 0);
+          }
+
+          totalKcal += mealKcal;
+        });
+
+        const totalKcalElement = document.querySelector('.calory-focus-num');
+        const safeDisplayKcal = dailyCalories && !isNaN(Number(dailyCalories.total_kcal)) 
+          ? Number(dailyCalories.total_kcal) 
+          : totalKcal;
+
+        if (totalKcalElement) {
+          totalKcalElement.textContent = Math.round(safeDisplayKcal);
+        }
+
+        const safeTargetKcal = dailyCalories && !isNaN(Number(dailyCalories.target_kcal))
+          ? Number(dailyCalories.target_kcal)
+          : 1420;
+
+        let percent = Math.min((safeDisplayKcal / safeTargetKcal) * 100, 100);
+        if (isNaN(percent)) {
+          percent = 0;
+        }
+
+        const barFill = document.querySelector('.bar-fill');
+        if (barFill) {
+          barFill.style.width = `${percent}%`;
+        }
+
+        const currentEl = document.getElementById("current-kcal");
+        const goalEl = document.getElementById("goal-kcal");
+        if (currentEl && goalEl) {
+          currentEl.textContent = Math.round(safeDisplayKcal);
+          goalEl.textContent = safeTargetKcal;
+          
+          const barPercent = Math.min((safeDisplayKcal / safeTargetKcal) * 100, 100);
+          const caloryBar = document.getElementById("calory-bar");
+          if (caloryBar) {
+            caloryBar.style.width = `${barPercent}%`;
+          }
+        }
+
+        document.querySelectorAll('.meal-add').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const meal = btn.getAttribute('data-meal');
+            const existingMeals = mealsData[meal] || [];
+
+            localStorage.setItem('selectedMeal', meal);
+
+            if (existingMeals.length > 0) {
+              window.location.href = '/accounts/meal-edit/';
+            } else {
+              window.location.href = `/accounts/search/?meal=${encodeURIComponent(meal)}`;
+            }
+          });
+        });
+
+      } catch (error) {
+        console.error("식단 데이터 로딩 중 오류:", error);
+        document.querySelector('.calory-focus-num').textContent = '0';
+        document.querySelectorAll('.meal-kcal').forEach(el => {
+          el.textContent = '0Kcal';
+          el.classList.add('empty');
+        });
+      }
+
     });
 
-    dateSelect.appendChild(dayDiv);
-  }
-
-  document.querySelectorAll('.meal-add').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const meal = btn.getAttribute('data-meal');
-    const selectedDate = localStorage.getItem("selectedDate") || getTodayDate();
-    const existingMeals = JSON.parse(localStorage.getItem(`meals-${selectedDate}-${meal}`)) || [];
-
-    localStorage.setItem('selectedMeal', meal);
-
-    if (existingMeals.length > 0) {
-      // 기존 식단이 있으면 수정 페이지로 이동
-      window.location.href = '/accounts/meal-edit/';
-    } else {
-      // 새로운 식단 등록이면 검색 페이지로 이동
-      window.location.href = `/accounts/search/?meal=${encodeURIComponent(meal)}`;
-    }
-  });
-});
-
-  // 메인 화면 식사별 칼로리 계산 및 표시
-  const mealTypes = ['아침', '점심', '저녁', '간식'];
-  const selectedDate = localStorage.getItem("selectedDate") || getTodayDate();
-  let totalKcal = 0;
-
-  mealTypes.forEach(meal => {
-    const meals = JSON.parse(localStorage.getItem(`meals-${selectedDate}-${meal}`)) || [];
-    const mealKcal = meals.reduce((acc, cur) => {
-      const kcal = parseFloat(cur.kcal?.replace(/[^\d.]/g, '')) || 0;
-      return acc + kcal;
-    }, 0);
-
-    const kcalSpan = [...document.querySelectorAll('.meal-item')].find(
-      item => item.querySelector('.meal-name')?.textContent === meal
-    )?.querySelector('.meal-kcal');
-
-    if (kcalSpan) {
-      kcalSpan.textContent = `${mealKcal}Kcal`;
-      kcalSpan.classList.toggle('empty', mealKcal === 0);
+    function toggleFeedback() {
+      const panel = document.getElementById("feedback-panel");
+      const arrow = document.getElementById("feedback-arrow-icon");
+      const isOpen = panel.style.display === "block";
+      panel.style.display = isOpen ? "none" : "block";
+      arrow.src = isOpen ? "{% static 'images/open.png' %}" : "{% static 'images/close.png' %}";
+      arrow.alt = isOpen ? "열기 아이콘" : "닫기 아이콘";
     }
 
-    totalKcal += mealKcal;
-  });
+    function toggleexercise() {
+      const panel = document.getElementById("exercise-panel");
+      const arrow = document.getElementById("exercise-arrow-icon");
+      const isOpen = panel.style.display === "block";
+      panel.style.display = isOpen ? "none" : "block";
+      arrow.src = isOpen ? "{% static 'images/open.png' %}" : "{% static 'images/close.png' %}";
+      arrow.alt = isOpen ? "열기 아이콘" : "닫기 아이콘";
 
-  document.querySelector('.calory-focus-num').textContent = totalKcal;
-
-  // 칼로리 목표 대비 진행률 바
-  const targetKcal = 1420;
-  const percent = Math.min((totalKcal / targetKcal) * 100, 100);
-  document.querySelector('.bar-fill').style.width = `${percent}%`;
-
-
-  // 목표 칼로리 바 렌더링 (추가: current-kcal, goal-kcal 엘리먼트 있을 경우)
-  const currentEl = document.getElementById("current-kcal");
-  const goalEl = document.getElementById("goal-kcal");
-  if(currentEl && goalEl){
-    const current = parseInt(currentEl.textContent.trim(), 10);
-    const goal = parseInt(goalEl.textContent.trim(), 10);
-    const barPercent = Math.min((current / goal) * 100, 100);
-    const caloryBar = document.getElementById("calory-bar");
-    if(caloryBar){
-      caloryBar.style.width = `${barPercent}%`;
+      panel.style.animation = 'none';
+      panel.offsetHeight; 
+      panel.style.animation = '';
     }
-  }
-});
-
-// 토글 함수: 피드백 패널
-function toggleFeedback() {
-  const panel = document.getElementById("feedback-panel");
-  const arrow = document.getElementById("feedback-arrow-icon");
-  const isOpen = panel.style.display === "block";
-  panel.style.display = isOpen ? "none" : "block";
-  arrow.src = isOpen ? "{% static 'images/open.png' %}" : "{% static 'images/close.png' %}";
-  arrow.alt = isOpen ? "열기 아이콘" : "닫기 아이콘";
-}
-
-// 토글 함수: 운동 패널
-function toggleexercise() {
-  const panel = document.getElementById("exercise-panel");
-  const arrow = document.getElementById("exercise-arrow-icon");
-  const isOpen = panel.style.display === "block";
-  panel.style.display = isOpen ? "none" : "block";
-  arrow.src = isOpen ? "{% static 'images/open.png' %}" : "{% static 'images/close.png' %}";
-  arrow.alt = isOpen ? "열기 아이콘" : "닫기 아이콘";
-
-  // 강제 리플로우 처리 (화면 깜빡임 방지용)
-  arrow.style.display = "none";
-  void arrow.offsetHeight;
-  arrow.style.display = "";
-}
-
 </script>
-    
-</body>
 
+
+</body>
 </html>

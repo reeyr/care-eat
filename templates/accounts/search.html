@@ -40,219 +40,248 @@
     const resultList = document.getElementById('resultList');
     const modalOverlay = document.getElementById('modal-overlay');
     const modalBody = document.getElementById('modal-body');
-
+    
+    const API_BASE_URL = 'http://localhost:8000/api';
+    
     function openModal(contentHTML) {
-      modalBody.innerHTML = contentHTML;
-      modalOverlay.style.display = 'flex';
+        modalBody.innerHTML = contentHTML;
+        modalOverlay.style.display = 'flex';
     }
-
+    
     function closeModal() {
-      modalOverlay.style.display = 'none';
+        modalOverlay.style.display = 'none';
     }
-
+    
     modalOverlay.addEventListener('click', (e) => {
-      if (e.target === modalOverlay) closeModal();
+        if (e.target === modalOverlay) closeModal();
     });
-
-    document.addEventListener('DOMContentLoaded', () => {
-      document.querySelector('.back-button').addEventListener('click', () => history.back());
-
-      const topText = document.querySelector('.top-text');
-      const params = new URLSearchParams(window.location.search);
-      const mealFromUrl = params.get('meal');
-      if (mealFromUrl) localStorage.setItem('selectedMeal', mealFromUrl);
-
-      const mealToShow = mealFromUrl || localStorage.getItem('selectedMeal');
-      if (topText && mealToShow) topText.textContent = mealToShow;
-    });
-
-    searchInput.addEventListener('input', () => {
-      const keyword = searchInput.value.trim();
-      if (keyword === "") {
-        resultList.innerHTML = "";
-        return;
-      }
-      const url = `http://localhost:8000/api/food/foods/?search=${encodeURIComponent(keyword)}`;
-
-      fetch(url)
-        .then(res => {
-          if (!res.ok) throw new Error(`API 요청 실패 (status: ${res.status})`);
-          return res.json();
-        })
-        .then(data => renderFoodResults(data))
-        .catch(err => {
-          console.error('에러:', err);
-          resultList.innerHTML = "<li>검색 결과를 불러올 수 없습니다.</li>";
-        });
-    });
-
+    
     function getCSRFToken() {
-      const name = "csrftoken";
-      const cookies = document.cookie.split(';');
-      for (let i = 0; i < cookies.length; i++) {
-        const c = cookies[i].trim();
-        if (c.startsWith(name + '=')) {
-          return decodeURIComponent(c.substring(name.length + 1));
+        const name = "csrftoken";
+        const cookies = document.cookie.split(';');
+        for (let c of cookies) {
+            c = c.trim();
+            if (c.startsWith(name + '=')) {
+                return decodeURIComponent(c.substring(name.length + 1));
+            }
         }
-      }
-      return '';
+        return '';
     }
+    
+    let tempSavedMeals = [];
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelector('.back-button').addEventListener('click', () => history.back());
+        
+        const topText = document.querySelector('.top-text');
+        const params = new URLSearchParams(window.location.search);
+        const mealFromUrl = params.get('meal');
+        
+        if (mealFromUrl) {
+            window.selectedMeal = mealFromUrl;
+        } else {
+            window.selectedMeal = localStorage.getItem('selectedMeal') || '아침';
+        }
+        
+        if (topText) {
+            topText.textContent = window.selectedMeal;
+        }
 
+        document.querySelector('.done-button').addEventListener('click', () => {
+    setTimeout(() => {
+        if (tempSavedMeals.length > 0) {
+            localStorage.setItem('savedMeals', JSON.stringify(tempSavedMeals));
+            localStorage.setItem('selectedMeal', window.selectedMeal);
+        }
+        window.location.href = '/accounts/meal_add/';
+    }, 100); 
+});
+
+        updateSavedCountBadge();
+    });
+    
+    searchInput.addEventListener('input', debounce(() => {
+        const keyword = searchInput.value.trim();
+        if (keyword === "") {
+            resultList.innerHTML = "";
+            return;
+        }
+        
+        searchFoods(keyword);
+    }, 300));
+    
+
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+    
+    async function searchFoods(keyword) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/food/foods/?search=${encodeURIComponent(keyword)}`);
+            
+            if (!response.ok) {
+                throw new Error(`API 요청 실패 (status: ${response.status})`);
+            }
+            
+            const data = await response.json();
+            renderFoodResults(data);
+        } catch (err) {
+            console.error('검색 에러:', err);
+            resultList.innerHTML = "<li>검색 결과를 불러올 수 없습니다.</li>";
+        }
+    }
+    
     function renderFoodResults(foodList) {
-      resultList.innerHTML = "";
-      const resultArea = document.querySelector('.result-area');
-      if (foodList.length === 0) {
-        resultArea.classList.remove('has-results');
-        resultList.innerHTML = "<li>검색 결과가 없습니다.</li>";
-        return;
-      }
-
-      resultArea.classList.add('has-results');
-
-      foodList.forEach(food => {
-        const li = document.createElement('li');
-        li.className = 'food-item';
-
-        li.innerHTML = `
-          <div class="food-info">
-            <div class="left">
-              <div class="food-name">${food.name}</div>
-              <div class="food-volume">${food.unit}</div>
-            </div>
-            <div class="right">
-              <button class="add-button">+</button>
-              <div class="food-kcal">${food.kcal_per_unit}kcal</div>
-            </div>
-          </div>
-        `;
-
-        li.addEventListener('click', () => {
-          const base = {
-            kcal: parseFloat(food.kcal_per_unit) || 0
-          };
-          let count = 1;
-
-          const contentHTML = `
+        resultList.innerHTML = "";
+        const resultArea = document.querySelector('.result-area');
+        
+        if (foodList.length === 0) {
+            resultArea.classList.remove('has-results');
+            resultList.innerHTML = "<li>검색 결과가 없습니다.</li>";
+            return;
+        }
+        
+        resultArea.classList.add('has-results');
+        
+        foodList.forEach(food => {
+            const li = document.createElement('li');
+            li.className = 'food-item';
+            li.innerHTML = `
+                <div class="food-info">
+                    <div class="left">
+                        <div class="food-name">${food.name}</div>
+                        <div class="food-volume">${food.unit}</div>
+                    </div>
+                    <div class="right">
+                        <button class="add-button">+</button>
+                        <div class="food-kcal">${food.kcal_per_unit}kcal</div>
+                    </div>
+                </div>
+            `;
+            
+            li.addEventListener('click', () => openFoodModal(food));
+            resultList.appendChild(li);
+        });
+    }
+    
+    function openFoodModal(food) {
+        let count = 1;
+        const baseKcal = parseFloat(food.kcal_per_unit) || 0;
+        
+        const contentHTML = `
             <div class="modal-title">${food.name}</div>
             <div class="detail-box">
-              <div class="detail-item left"><p class="detail">탄수화물</p><p class="content" id="carb">0g</p></div>
-              <div class="detail-item center"><p class="detail">단백질</p><p class="content" id="protein">0g</p></div>
-              <div class="detail-item right"><p class="detail">지방</p><p class="content" id="fat">0g</p></div>
-              <p class="kcal-info" id="kcal">${base.kcal}kcal</p>
+                <div class="detail-item left">
+                    <p class="detail">탄수화물</p>
+                    <p class="content" id="carb">0g</p>
+                </div>
+                <div class="detail-item center">
+                    <p class="detail">단백질</p>
+                    <p class="content" id="protein">0g</p>
+                </div>
+                <div class="detail-item right">
+                    <p class="detail">지방</p>
+                    <p class="content" id="fat">0g</p>
+                </div>
+                <p class="kcal-info" id="kcal">${baseKcal}kcal</p>
             </div>
-            <div class="volume-box"><div class="amount"><p class="amount-info">${food.unit}</p></div></div>
+            <div class="volume-box">
+                <div class="amount">
+                    <p class="amount-info">${food.unit}</p>
+                </div>
+            </div>
             <div class="count-box">
-              <button class="count-btn" id="decrease">–</button>
-              <span class="count-number" id="count">1</span>
-              <button class="count-btn" id="increase">+</button>
+                <button class="count-btn" id="decrease">–</button>
+                <span class="count-number" id="count">1</span>
+                <button class="count-btn" id="increase">+</button>
             </div>
-            <button class="save">식단 등록</button>
-          `;
-
-          openModal(contentHTML);
-
-          setTimeout(() => {
-            const kcalEl = document.getElementById('kcal');
-            const countEl = document.getElementById('count');
-
-            function updateValues() {
-              countEl.textContent = count;
-              kcalEl.textContent = `${(base.kcal * count).toFixed(1)}kcal`;
-            }
-
-            document.getElementById('increase').addEventListener('click', () => {
-              count++;
-              updateValues();
-            });
-
-            document.getElementById('decrease').addEventListener('click', () => {
-              if (count > 1) {
-                count--;
-                updateValues();
-              }
-            });
-
-            document.querySelector('.save').addEventListener('click', () => {
-              const mealMapping = {
-    '아침': 'breakfast',
-    '점심': 'lunch',
-    '저녁': 'dinner',
-    '간식': 'snack'
-  };
-
-  const selectedMeal = localStorage.getItem("selectedMeal");
-  const timeSlot = mealMapping[selectedMeal] || 'breakfast';
-
-  const saveDiet = {
-    food_id: food.id,
-    time_slot: timeSlot,
-    quantity: count,
-    date: new Date().toISOString().slice(0, 10),
-    memo: ""
-  };
-
-  fetch("http://localhost:8000/api/diet/create/", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-CSRFToken": getCSRFToken()
-    },
-    credentials: "include",
-    body: JSON.stringify(saveDiet)
-  })
-  .then(res => {
-    if (!res.ok) throw new Error(`등록 실패: ${res.status}`);
-    return res.json();
-  })
-  .then(data => {
-  console.log("식단 등록 성공:", data);
-  closeModal();
-
-  // 기존 저장된 savedMeals 배열 가져오기 또는 빈 배열 초기화
-  let savedMeals = JSON.parse(localStorage.getItem('savedCountBadge')) || [];
-  // 여기서 savedCountBadge는 숫자니까 savedMeals로 바꿔야 함:
-  savedMeals = JSON.parse(localStorage.getItem('savedMeals')) || [];
-
-  // 서버에서 받은 식단 데이터를 로컬 배열에 추가 (필요한 필드만 저장)
-  savedMeals.push({
-    name: data.food.name,            // 서버 응답 food 이름
-    volume: data.food.unit,          // food 단위
-    count: saveDiet.quantity,        // 수량
-    kcal: `${(parseFloat(data.food.kcal_per_unit) * saveDiet.quantity).toFixed(1)}kcal`,  // 칼로리 계산 후 문자열
-    carb: "0g",   // 탄수화물 (필요 시 API 응답에 따라 수정)
-    protein: "0g",
-    fat: "0g"
-  });
-
-  // localStorage에 업데이트
-  localStorage.setItem('savedMeals', JSON.stringify(savedMeals));
-
-  // 뱃지 UI 업데이트
-  const badge = document.getElementById('savedCountBadge');
-  const count = parseInt(badge.textContent || '0', 10) + 1;
-  badge.textContent = count;
-  badge.style.display = 'inline-block';
-
-  document.querySelector('.done-button').classList.add('active');
-})
-  .catch(err => {
-    alert("식단 등록 중 오류 발생: " + err.message);
-    console.error(err);
-  });
-});
-          }, 0);
-        });
-
-        resultList.appendChild(li);
-      });
+            <button class="save">식단에 추가</button>
+        `;
+        
+        openModal(contentHTML);
+        
+        setTimeout(() => {
+            setupModalEvents(food, count, baseKcal);
+        }, 0);
     }
 
-    document.querySelector('.done-button').addEventListener('click', () => {
-      const params = new URLSearchParams(window.location.search);
-      const meal = params.get('meal');
-      if (meal) localStorage.setItem('selectedMeal', meal);
-      window.location.href = '/accounts/meal_add/';
+    function setupModalEvents(food, initialCount, baseKcal) {
+        let count = initialCount;
+        const kcalEl = document.getElementById('kcal');
+        const countEl = document.getElementById('count');
+        const carbEl = document.getElementById('carb');
+        const proteinEl = document.getElementById('protein');
+        const fatEl = document.getElementById('fat');
+        
+        function updateValues() {
+            countEl.textContent = count;
+            const totalKcal = (baseKcal * count).toFixed(1);
+            kcalEl.textContent = `${totalKcal}kcal`;
+  
+            carbEl.textContent = "0g";
+            proteinEl.textContent = "0g";
+            fatEl.textContent = "0g";
+        }
+   
+        document.getElementById('increase').addEventListener('click', () => {
+            count++;
+            updateValues();
+        });
+        
+        document.getElementById('decrease').addEventListener('click', () => {
+            if (count > 1) {
+                count--;
+                updateValues();
+            }
+        });
+       
+        document.querySelector('.save').addEventListener('click', () => {
+            addFoodToTempList(food, count);
+            closeModal();
+        });
+    }
+    
+    function addFoodToTempList(food, count) {
+        const totalKcal = (parseFloat(food.kcal_per_unit) * count).toFixed(1);
+        
+        const mealItem = {
+            food_id: food.id,
+            name: food.name,
+            volume: food.unit,
+            count: count,
+            kcal: `${totalKcal}kcal`,
+            carb: "0g", // API에 영양성분 정보가 없으므로 기본값
+            protein: "0g",
+            fat: "0g"
+        };
+        
+        tempSavedMeals.push(mealItem);
+        updateSavedCountBadge();
+        
+        document.querySelector('.done-button').classList.add('active');
+
+    }
+
+    function updateSavedCountBadge() {
+        const badge = document.getElementById('savedCountBadge');
+        if (badge) {
+            const count = tempSavedMeals.length;
+            badge.textContent = count;
+            badge.style.display = count > 0 ? 'inline-block' : 'none';
+        }
+    }
+    window.addEventListener('beforeunload', () => {
+
     });
-  </script>
+</script>
+  
 </body>
 </html>
